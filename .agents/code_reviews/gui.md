@@ -50,3 +50,9 @@
 
 - 已移除無 caller 的 `DB.isNewPatch` 與專案內唯一的 `GetBuildInfo()` 呼叫。它不是 `C.options`、SavedVariables 或文件化第三方 API，不需要設定遷移。
 - 12.1 Interface 的 runtime 確認仍可由使用者在正式服執行 `/dump select(4, GetBuildInfo())`；移除 addon 內未使用的 cache 不影響這項驗證。
+
+## 2026-08-14 Tooltips 與 AuraContainer
+
+- `AuroraClassicDB.Tooltips` 除既有 `FrameXML/GameTooltip.lua` 外，現亦在 `AddOns/Blizzard_AuraContainer.lua` 的 theme 入口控制 AuraContainer 專用 tooltip skin。
+- 兩條路徑都採 reload-based 行為。false 時不呼叫 `AuraContainerInbound.ResetTooltipStyle()`，避免 Aurora 在停用狀態覆寫 Blizzard 或其他 addon 已設定的樣式；true 時才經公開 secure delegate 設定 Aurora backdrop。
+- 正式服需驗證 true → false → true 的兩向 reload：一般 GameTooltip 與 AuraContainer tooltip 應分別恢復 Blizzard default／Aurora 外觀，且不互相影響。

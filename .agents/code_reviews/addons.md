@@ -29,7 +29,7 @@
 
 ## 2026-08-11 全量審查結論
 
-- 初次全量 review 已閱讀當時的 63/63 Lua 與 79 個 theme key。2026-08-12 退休三個 dead module、再新增獨立 HousingBlueprint module 後，當前 `AddOns.xml` 為 61 個 Script／61 個 Lua、76 個 theme key；唯一仍以不存在 MAINLINE addon key 註冊的是待決策的 `Blizzard_Tutorial`。
+- 初次全量 review 已閱讀當時的 63/63 Lua 與 79 個 theme key。2026-08-12 退休三個 dead module、再新增獨立 HousingBlueprint module，2026-08-14 新增 AuraContainer module 後，當前 `AddOns.xml` 為 62 個 Script／62 個 Lua、77 個 theme key；唯一仍以不存在 MAINLINE addon key 註冊的是待決策的 `Blizzard_Tutorial`。
 - 12.1 確定硬斷點：Achievement HeaderDetails/Filters、Delves CompanionSlots、Housing root HouseDropdown、Weekly Rewards ConcessionsFrame。
 - Weekly Rewards 的 `WeeklyRewardsFrameNameFrame` 是另一個既有確定錯誤。
 - 全量審查當時確認的覆蓋缺口／失效：PVP 新 Arena button 與 CategoryButton5、PlayerChoice BorderOverlay、NewPlayer 舊 global、Transmog PreviewedWeaponToggle、ExpansionLandingPage Dragonriding target、MajorFactionRenown dead target。截至 2026-08-12，這批項目均已修正或退休。
@@ -89,7 +89,7 @@
 - `Blizzard_Delves.lua` 只移除不存在的 `C.themes["Blizzard_DelvesDashboardUI"]` closure；保留同檔有效的 Companion Configuration／Difficulty Picker themes 與 `AddOns.xml` Script。
 - `Blizzard_TalentUI.lua` 與 `Blizzard_VoidStorageUI.lua` 已整檔刪除並同步移除 XML Script。WoWUI live 69273 沒有 MAINLINE `Blizzard_TalentUI`（只有 Mists/Cata source，MAINLINE 使用 PlayerSpells），也沒有 VoidStorageUI；兩檔未輸出跨檔 helper。
 - `Blizzard_MajorFactions` addon key 本身仍有效，但 Aurora 唯一目標 `MajorFactionRenownFrame` 已不存在，因此 `Blizzard_MajorFactions.lua` 與 XML Script 已刪除。MajorFaction interaction 現由 Blizzard Bootstrap 導向 EncounterJournal Journeys；Aurora 的 EncounterJournal root、Journeys Border／scroll／buttons／pooled watch checkbox 已承接原外觀責任。
-- 清理完成當下 AddOns 載入契約為 60 個 Script／60 個 Lua、75 個 theme key；之後新增獨立 HousingBlueprint module，現況為 61／61／76。Lua、XML、被移除 key／global 與跨檔 helper 搜尋均已核對。這不表示所有 Journey card／reward track 細節都已全面換皮，只有確認刪除舊 module 不會造成外觀責任回歸。
+- 清理完成當下 AddOns 載入契約為 60 個 Script／60 個 Lua、75 個 theme key；之後新增獨立 HousingBlueprint module，成為 61／61／76；2026-08-14 再新增 AuraContainer module，現況為 62／62／77。Lua、XML、被移除 key／global 與跨檔 helper 搜尋均已核對。這不表示所有 Journey card／reward track 細節都已全面換皮，只有確認刪除舊 module 不會造成外觀責任回歸。
 
 ## 2026-08-12 12.1 新 UI 靜態覆蓋
 
@@ -99,6 +99,14 @@
 - `Blizzard_PVPUI.lua` 已枚舉 live `BonusTrainingGroundButtons` parent array，因此普通與 Arena Training Ground button 共用同一 skin。
 - `Blizzard_GuildControlUI.lua` 已處理固定 Discord server／channel controls，並在全域 `GuildControlUI_Discord_Update` 與非會長載入時已快取的 `GuildControlUI.rankUpdate` 後冪等處理動態 linked／unlinked frames；不呼叫或解析 Discord API/data。
 - Communities live source 沒有對上述 Discord／friend-request diff 新增可獨立 skin 的 frame。此項不新增 runtime code，避免把資料層變更誤當 UI 結構。
+
+## 2026-08-14 AuraContainer tooltip 安全適配
+
+- 新增 `AddOns/Blizzard_AuraContainer.lua` 與對應 `AddOns.xml` Script，使用 WoWUI live TOC 的真實 addon key `C.themes["Blizzard_AuraContainer"]`。2026-08-14 本機 live 已更新到 `3981450a`（12.1.0.69283），AuraContainer 與相關 API 文件相較 migration 基準 `b3733541`（69273）沒有差異。`Blizzard_AuraContainerInbound.lua` 是該 TOC 最後載入且匯入 global environment 的檔案；Aurora initial scan 與 delayed `ADDON_LOADED` 都只會在完整 addon 載入後執行 theme，因此 closure 執行時安全入口已存在。
+- `AuroraClassicDB.Tooltips=false` 時 theme 直接返回，不呼叫 `ResetTooltipStyle()`；與既有 GameTooltip 一樣採 reload-based 行為，保留 Blizzard 或其他 addon 當下的預設樣式。
+- skin 只呼叫 `AuraContainerInbound.SetTooltipBackdrop`，以 `DB.bdTex`、`C.mult`、黑色 border、`.7` center alpha 與一像素內縮近似 Aurora GameTooltip。沒有存取 hidden／forbidden tooltip、沒有 hook AuraButton `OnEnter`，也不讀 aura owner、spell、unit 或 tooltip payload。
+- Blizzard 的 safe setter 會先清除既有 tooltip style，NineSlice／TextureSlice／Backdrop 三種模式互斥；本 skin只選 Backdrop。公開入口無法提供 `B.ReskinTooltip` 的 shadow、額外 tiled texture、frame level、狀態列／獎勵 icon 等內容級處理，亦不能在其他 caller 之後無侵入地強制搶回樣式。
+- 尚待正式服測 Tooltips true／false 兩向 reload、helpful／harmful aura hover、換目標與 aura button reuse，以及戰鬥／restricted aura 場景無 Lua error、taint 或 blocked action。
 
 ## 2026-08-12 正式服 O 鍵／Guild rank lifecycle 修正
 

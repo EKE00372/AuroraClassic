@@ -9,12 +9,12 @@
 3. 不把記憶中的歷史判斷直接當成現況；確認後才引用。
 4. 完成審查或修改後，把新結論寫回相關模組記憶，索引只更新摘要與入口。
 
-## 最新概況（2026-08-12）
+## 最新概況（2026-08-14）
 
 - 已完整閱讀 `D:\Github\oUF_Ruri` 下 24 份 Markdown，包括 `AGENTS.md`、`CODE_REVIEW.md`、全部 `.agents/code_reviews/*.md`、README 與 issue template。
 - 已將其中可泛用的 code review 方法、生命週期檢查、secret value、CVar、效能與記憶維護原則整理到 AuroraClassic 的本機文件。
 - oUF_Ruri 的模組結論、API 白名單、版本判斷與歷史問題只保留為參考案例，不視為 AuroraClassic 的現況。
-- 初次全量 review 已逐檔讀完 AuroraClassic 當時的 126 個 Lua、TOC、兩份載入 XML、打包／release 設定與 README。2026-08-12 退休三個 dead AddOns 模組、再新增獨立 HousingBlueprint 模組後，當前為 124 個 Lua：58 個 FrameXML Script、61 個 AddOns Script，均與實際 Lua 一一對應。
+- 初次全量 review 已逐檔讀完 AuroraClassic 當時的 126 個 Lua、TOC、兩份載入 XML、打包／release 設定與 README。2026-08-12 退休三個 dead AddOns 模組、再新增獨立 HousingBlueprint 模組，2026-08-14 新增 AuraContainer 模組後，當前為 125 個 Lua：58 個 FrameXML Script、62 個 AddOns Script，均與實際 Lua 一一對應。
 - 12.1 正式上線後已改用 WoWUI `live` 重核。正式 migration 基準為 `861fbf13`（12.0.7.68974）→ `b3733541`（tag `v12.1.0`，12.1.0.69273）；先前 `ptr=b883b4d`（12.1.0.69189）結論已由 live source 覆核，不再作當前事實來源。
 - ChatFrame、Fonts、Achievement、Delves Companion、Housing Dashboard、Weekly Rewards 六個 12.1 結構性硬斷點已在 2026-08-12 當前工作樹完成靜態修正；Weekly Rewards 不存在的確認框 NameFrame 路徑與 ChatFrame 重新可達的 voice secret data flow 也一併修正。舊 global／field 已無殘留，六個模組的載入 XML／theme key 不需改動，正式服操作驗證仍待完成。
 - CooldownViewer restricted-aura dispel color 與 Communities roster `classID` 兩條既有 secret data flow 已完成靜態修正：Aurora 不再解析 aura／member payload，改保留 Blizzard 原生 debuff border 與 class texture；詳細風險、實作取捨與測試矩陣見 `2026-08-12-secret-safe-cooldownviewer-communities.md`。
@@ -24,6 +24,7 @@
 - AuroraClassic 當前工作樹已依使用者指示更新為 `Interface: 120100`；正式服 `GetBuildInfo()` 第四回傳與關閉「載入過期插件」的冷登入仍待驗證。
 - 最後 PTR → live 只改動 16 個 tracked 檔（14 個 code/API，另含 `.gitignore` 與 `No code changes.txt`）；與 Aurora migration 直接相關的是 SocialUI 即時搜尋／filter lifecycle、HousingBlueprint 輸入與內容狀態。未新增第七個現有 runtime 硬斷點，但這兩區的實作與測試清單已補強。
 - 12.1 新 UI 已於 2026-08-12 完成靜態覆蓋，並做過修後 self-review：SocialUI 補 Raid content／RaidInfo side window且排除 ResizeLayout backdrop；Housing budget pool 改 hook 兩個具體 container instance；Guild Discord 補已快取的 `rankUpdate`；Cooldown drag 保留正常延後建立的安全 Mixin hook，不為 theme 前已存在的匿名 singleton 遍歷帶 Hierarchy secret aspect 的 UI tree。新增 skin 只讀 frame／region，不解析 Social search、Housing share code、Discord 或 aura payload；正式服狀態切換、pool reuse、secure drag 與 LoD 兩種時序仍待驗證。
+- 2026-08-14 以 WoWUI live `3981450a`（12.1.0.69283）新增 `Blizzard_AuraContainer` tooltip skin；相關 source/API 相較 69273 migration 基準沒有差異。實作只透過 Blizzard 公開的 `AuraContainerInbound.SetTooltipBackdrop` secure delegate 設定黑色背景、黑邊與 `.7` 透明度，受 `AuroraClassicDB.Tooltips` 控制；不存取 forbidden tooltip、不 hook AuraButton，也不消費 aura payload。安全 API 可用範圍與正式服 restricted aura 測試仍見 AddOns／secret 記憶。
 - 正式服已確認 `Blizzard_SocialUI` 可成功載入，但 `C_SocialUI.IsSystemEnabled()`／`SocialUIControl.IsEnabled()` 目前為 false，`O` 因此走 legacy FriendsFrame。該路徑的 `FriendsFrame_OnShow()` 刷新 guild roster，暴露 Aurora GuildControl rank rows 尚未建立便由自建 `GUILD_RANKS_UPDATE` handler 掃描的 hard error；當前工作樹已移除錯誤事件監聽，改在原生 `GuildControlUI_RankOrder_Update` 完成後 skin 並 immediate 掃描既有 rows，正式服反覆按 `O` 與 rank 變更待重測。
 - Communities 的 12.1 Discord／friend-request source diff 沒有新增獨立 widget/template；既有 chat／stream frame skin 自然承接。Aurora 未新增 `discordInfo`／member payload consumer，這項已由「待新增 UI」更正為「無額外 runtime skin 必要」。
 - 已更正 Bootstrap 判斷：`Init.lua` 的 initial scan 已同時要求 `loadedOrLoading` 與 `loaded`，不把 bootstrap-only 提早執行列為已確認 bug；delayed `ADDON_LOADED` 清錯 theme key 也已修正，兩種 LoD 時序仍待正式服驗證。

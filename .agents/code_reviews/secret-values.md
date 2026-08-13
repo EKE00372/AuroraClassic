@@ -40,6 +40,7 @@
 | `AddOns/Blizzard_Communities.lua` 的 roster class icon | 已移除 `GetMemberInfo()`／`classID` 資料消費；沿用原生 class texture，Aurora 外框只在 `IsShown()` 非 secret 時同步 | 已完成靜態修正；chat messaging lockdown 與 pool reuse 待正式服驗證 |
 | `FrameXML/ChatFrame.lua` 的 voice notification | hook 在讀 GUID／class 前檢查 chat messaging lockdown 與 `B:NotSecretValue` | 已完成靜態修正；restricted 時保留 Blizzard hook 前已恢復的原生 channel color，仍須正式服實測 |
 | `AddOns/Blizzard_CooldownViewer.lua` 的 dispel border | 已刪除 aura instance／secret color post-hook，保留 Blizzard 原生 DebuffBorder 管理 dispel atlas | 已完成靜態修正；restricted aura、combat 與 pool reuse 待正式服驗證 |
+| `AddOns/Blizzard_AuraContainer.lua` 的專用 tooltip | 不取得 hidden／forbidden tooltip，不 hook AuraButton；只把公開外觀常數交給 `AuraContainerInbound.SetTooltipBackdrop` secure delegate | 已完成靜態安全邊界核對；restricted aura hover 與 combat 待正式服驗證 |
 
 ## 12.1 live 補充契約
 
@@ -51,6 +52,8 @@
 - `C_HousingBlueprint.UpdateBlueprintStringFromInput` 是 live 69273 新增 API；若 `inputShareCode` 是 secret，只有未 taint 的呼叫可傳入。新增的 HousingBlueprint theme 不讀、不 trim、不驗證、不保存 share code，也不讀 budget data；只在兩個具體 BudgetsContainer instance 的原生 `SetInfo` 完成後枚舉 active frame pool，ContentSummary 繼續管理 visibility／Layout。
 - GuildControl Discord 與 Communities 12.1 diff 也未新增 Aurora gameplay-data consumer；Discord controls 依固定 frame 結構 skin，Communities 則沿用既有 chat／stream frame，沒有讀 `discordInfo`。
 - Cooldown drag preview 的匿名 singleton 沒有公開 instance accessor；若它在 Aurora theme 前已建立，不能用 `GetChildren()`／`GetNumChildren()` 廣域補抓，因 live 69273 對兩者標記 `SecretReturnsForAspect = Hierarchy`，任意 widget 還可能受 script-object access restriction。現行只 hook 已知 Mixin 的正常延後建立路徑，罕見既有 singleton 外觀由 `/reload` 恢復。
+- AuraContainer 的 tooltip XML 明確標記 `forbidden="true"`、`hideFromGlobalEnv="true"`。Aurora 不引用該 singleton，也不透過 aura button `OnEnter` 間接取得它；唯一 sink 是 Blizzard 提供的 `AuraContainerInbound.SetTooltipBackdrop` secure delegate，參數只有 `DB.bdTex`、`C.mult`、固定 ColorMixin 與固定 anchor offsets，不包含 aura、unit、spell 或 tooltip payload。
+- `SetTooltipBackdrop` 的 options 會由 Blizzard secure side 複製並驗證；本 theme 不呼叫 `Process*Options`、不對任何 secret value 做判斷或衍生。此結論是 source／API 靜態確認，仍不等於 restricted aura 正式服場景已完成安全認證。
 - 上述新增 UI 項目已完成靜態資料流邊界檢查，不表示已在正式服 restricted／secure 場景完成安全認證。
 
 ## 特別風險
