@@ -1196,6 +1196,11 @@ end
 local old_SetupTextureCoordinates = BackdropTemplateMixin.SetupTextureCoordinates
 
 function BackdropTemplateMixin:SetupTextureCoordinates()
+	-- Tooltip backdrops can become inaccessible after their initial skin.
+	if B:IsSecretTable(self) then return end
+	local canAccess = self:CanBeAccessedInContext()
+	if B:IsSecretValue(canAccess) or not canAccess then return end
+
 	local width = self:GetWidth()
 	if B:IsSecretValue(width) then return end -- needs review
 	old_SetupTextureCoordinates(self)
